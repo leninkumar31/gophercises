@@ -3,40 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
-	"html/template"
+	"log"
 	"net/http"
-	"os"
 
 	"../../cyoa"
 	"../../handler"
+	"../../utils"
 )
 
 func main() {
+	port := flag.Int("port", 8080, "Port on choose your own adventure runs")
 	jsonfile := flag.String("json", "gophers.json", "Json file which has stories")
-	htmlfile := flag.String("html", "layout.html", "HTML to render stories")
+	// htmlfile := flag.String("html", "layout.html", "HTML to render stories")
 	flag.Parse()
 	// open json file which contains stories
-	file := openFile(*jsonfile)
+	file := utils.OpenFile(*jsonfile)
 	story, err := cyoa.JsonStory(file)
 	if err != nil {
-		exit("Not able to read file")
+		utils.Exit("Not able to read file")
 	}
 	// create template using htmlfile
-	t := template.Must(template.ParseFiles(*htmlfile))
-	handler := handler.DefaultHandler(t, story)
-	fmt.Println("Server started listening on port 8080...")
-	http.ListenAndServe(":8080", handler)
-}
-
-func openFile(path string) *os.File {
-	file, err := os.Open(path)
-	if err != nil {
-		exit("Unable to open file")
-	}
-	return file
-}
-
-func exit(msg string) {
-	fmt.Println(msg)
-	os.Exit(1)
+	// t := template.Must(template.ParseFiles(*htmlfile))
+	// handler := handler.DefaultHandler(t, story)
+	h := handler.NewHandler(story)
+	fmt.Printf("Server started listening on port :%d\n", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 }
